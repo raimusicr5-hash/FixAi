@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 
-
 dotenv.config();
 
 const app = express();
@@ -23,7 +22,11 @@ async function gerarRespostaGemini(config) {
 
     const tentativas = 4;
 
-    for (let tentativa = 1; tentativa <= tentativas; tentativa++) {
+    for (
+        let tentativa = 1;
+        tentativa <= tentativas;
+        tentativa++
+    ) {
 
         try {
 
@@ -37,7 +40,9 @@ async function gerarRespostaGemini(config) {
             const response =
                 await ai.models.generateContent(config);
 
-            console.log("Resposta recebida do Gemini.");
+            console.log(
+                "Resposta recebida do Gemini."
+            );
 
             return response;
 
@@ -54,9 +59,13 @@ async function gerarRespostaGemini(config) {
                 error?.status ||
                 error?.error?.code;
 
-            if (status === 503 && tentativa < tentativas) {
+            if (
+                status === 503 &&
+                tentativa < tentativas
+            ) {
 
-                const espera = tentativa * 2000;
+                const espera =
+                    tentativa * 2000;
 
                 console.log(
                     "Gemini ocupado. Nova tentativa em " +
@@ -74,26 +83,31 @@ async function gerarRespostaGemini(config) {
     }
 }
 
-app.post("/api/analisar", async (req, res) => {
+app.post(
+    "/api/analisar",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const {
-            problema,
-            imagem,
-            historico
-        } = req.body;
+            const {
+                problema,
+                imagem,
+                historico
+            } = req.body;
 
-        if (!problema && !imagem) {
+            if (
+                !problema &&
+                !imagem
+            ) {
 
-            return res.status(400).json({
-                erro:
-                    "Digite uma mensagem ou envie uma imagem."
-            });
-        }
+                return res.status(400).json({
+                    erro:
+                        "Digite uma mensagem ou envie uma imagem."
+                });
+            }
 
-        const instrucoes = `
-Você é o FixAI, um assistente inteligente especializado em diagnóstico, manutenção, reparo e solução de problemas.
+            const instrucoes = `
+Você é o Fixlyra, um assistente inteligente especializado em diagnóstico, manutenção, reparo e solução de problemas.
 
 Você conversa com o usuário de forma natural, como um assistente de conversa contínua.
 
@@ -124,137 +138,155 @@ Responda somente por texto.
 O usuário pode continuar enviando mensagens sobre o mesmo assunto.
 `;
 
-        const partes = [];
+            const partes = [];
 
-        partes.push({
-            text: instrucoes
-        });
+            partes.push({
+                text: instrucoes
+            });
 
-        if (
-            Array.isArray(historico) &&
-            historico.length > 0
-        ) {
+            if (
+                Array.isArray(historico) &&
+                historico.length > 0
+            ) {
 
-            const historicoTexto =
-                historico
-                    .map(mensagem => {
+                const historicoTexto =
+                    historico
+                        .map(mensagem => {
 
-                        const nome =
-                            mensagem.role === "user"
-                                ? "Usuário"
-                                : "FixAI";
+                            const nome =
+                                mensagem.role === "user"
+                                    ? "Usuário"
+                                    : "Fixlyra";
 
-                        return (
-                            nome +
-                            ": " +
-                            mensagem.text
-                        );
+                            return (
+                                nome +
+                                ": " +
+                                mensagem.text
+                            );
 
-                    })
-                    .join("\n\n");
+                        })
+                        .join("\n\n");
+
+                partes.push({
+                    text:
+                        "\n\nHISTÓRICO DA CONVERSA:\n\n" +
+                        historicoTexto
+                });
+            }
 
             partes.push({
                 text:
-                    "\n\nHISTÓRICO DA CONVERSA:\n\n" +
-                    historicoTexto
+                    "\n\nMENSAGEM ATUAL DO USUÁRIO:\n" +
+                    (
+                        problema ||
+                        "O usuário enviou uma imagem."
+                    )
             });
-        }
 
-        partes.push({
-            text:
-                "\n\nMENSAGEM ATUAL DO USUÁRIO:\n" +
-                (
-                    problema ||
-                    "O usuário enviou uma imagem."
-                )
-        });
+            if (imagem) {
 
-        if (imagem) {
+                const match =
+                    imagem.match(
+                        /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
+                    );
 
-            const match =
-                imagem.match(
-                    /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/
+                if (match) {
+
+                    partes.push({
+                        inlineData: {
+                            mimeType: match[1],
+                            data: match[2]
+                        }
+                    });
+                }
+            }
+
+            const response =
+                await gerarRespostaGemini({
+
+                    model: "gemini-3.6-flash",
+
+                    contents: [
+                        {
+                            role: "user",
+                            parts: partes
+                        }
+                    ]
+
+                });
+
+            const resposta =
+                response.text;
+
+            if (!resposta) {
+
+                throw new Error(
+                    "O Gemini não retornou uma resposta."
                 );
+            }
 
-            if (match) {
+            res.json({
+                resposta: resposta
+            });
 
-                partes.push({
-                    inlineData: {
-                        mimeType: match[1],
-                        data: match[2]
-                    }
+        } catch (error) {
+
+            console.error("");
+            console.error(
+                "================================="
+            );
+            console.error(
+                "ERRO FINAL DO FIXLYRA:"
+            );
+            console.error(error);
+            console.error(
+                "================================="
+            );
+            console.error("");
+
+            const status =
+                error?.status;
+
+            if (status === 503) {
+
+                return res.status(503).json({
+
+                    erro:
+                        "A inteligência artificial está temporariamente ocupada. Tente novamente em alguns segundos."
+
                 });
             }
-        }
 
-        const response =
-            await gerarRespostaGemini({
-
-                model: "gemini-3.6-flash",
-
-                contents: [
-                    {
-                        role: "user",
-                        parts: partes
-                    }
-                ]
-
-            });
-
-        const resposta = response.text;
-
-        if (!resposta) {
-
-            throw new Error(
-                "O Gemini não retornou uma resposta."
-            );
-        }
-
-        res.json({
-            resposta: resposta
-        });
-
-    } catch (error) {
-
-        console.error("");
-        console.error("=================================");
-        console.error("ERRO FINAL DO FIXAI:");
-        console.error(error);
-        console.error("=================================");
-        console.error("");
-
-        const status = error?.status;
-
-        if (status === 503) {
-
-            return res.status(503).json({
+            return res.status(500).json({
 
                 erro:
-                    "A inteligência artificial está temporariamente ocupada. Tente novamente em alguns segundos."
+                    "Erro ao conversar com a inteligência artificial."
 
             });
         }
-
-        return res.status(500).json({
-
-            erro:
-                "Erro ao conversar com a inteligência artificial."
-
-        });
     }
-});
+);
 
-app.listen(PORT, () => {
+app.listen(
+    PORT,
+    () => {
 
-    console.log("");
-    console.log("=================================");
-    console.log("        FIXAI INICIADO");
-    console.log("=================================");
-    console.log("");
-    console.log(
-        "Abra no navegador: http://localhost:" +
-        PORT
-    );
-    console.log("");
+        console.log("");
+        console.log(
+            "================================="
+        );
+        console.log(
+            "       FIXLYRA INICIADO"
+        );
+        console.log(
+            "================================="
+        );
+        console.log("");
+        console.log(
+            "Abra no navegador: http://localhost:" +
+            PORT
+        );
+        console.log("");
 
-});
+    }
+);
