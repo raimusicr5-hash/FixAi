@@ -1,27 +1,74 @@
-<div class="section-title">Escolha uma categoria</div>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixlyra</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🔧</div>
+                <span>Fixlyra</span>
+            </div>
+            <button class="new-button" id="novoDiagnosticoBtn">+ Novo diagnóstico</button>
+            
+            <nav>
+                <button class="nav-item active" data-page="inicio">Início</button>
+                <button class="nav-item" data-page="reparos">Meus reparos</button>
+                <button class="nav-item" data-page="biblioteca">Biblioteca</button>
+                <button class="nav-item" data-page="configuracoes">Configurações</button>
+            </nav>
 
-<div class="categories">
-    <div class="category" data-category="Eletrônicos">
-        <div class="category-icon">🖥️</div>
-        <strong>Eletrônicos</strong>
-        <small>Mouse, PC, celular...</small>
+            <div class="sidebar-bottom">
+                IA para entender, diagnosticar e acompanhar seus reparos.
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <header class="topbar">
+                <div class="status">
+                    <span class="online"></span> Assistente de reparos • Online
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- PÁGINA INICIAL -->
+                <div id="inicio" class="page active-page">
+                    <div class="hero">
+                        <h1>O que precisa <span>consertar</span>?</h1>
+                        <p>Mostre o problema. A IA analisa e acompanha você passo a passo.</p>
+                    </div>
+
+                    <div class="repair-card">
+                        <div class="chat-result" id="chatResult">
+                            <!-- Mensagens do chat aparecem aqui -->
+                        </div>
+
+                        <div class="attachment-area" id="attachmentArea" style="display: none;">
+                            <!-- Área de anexos -->
+                        </div>
+
+                        <div class="chat-input-area">
+                            <textarea id="problemaInput" placeholder="Descreva o problema ou envie uma foto..."></textarea>
+                            <button class="icon-button" id="micBtn">🎤</button>
+                            <button class="send-button" id="enviarBtn">➔</button>
+                        </div>
+
+                        <div class="upload-buttons">
+                            <button id="tirarFotoBtn">📸 Tirar foto</button>
+                            <button id="enviarArquivoBtn">📁 Anexar arquivo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div class="category" data-category="Eletrodomésticos">
-        <div class="category-icon">🏠</div>
-        <strong>Eletrodomésticos</strong>
-        <small>Ventilador, máquina...</small>
-    </div>
-
-    <div class="category" data-category="Veículos">
-        <div class="category-icon">🏍️</div>
-        <strong>Veículos</strong>
-        <small>Moto, carro, caminhão...</small>
-    </div>
-
-    <div class="category" data-category="Máquinas">
-        <div class="category-icon">⚙️</div>
-        <strong>Máquinas</strong>
-        <small>Motores e equipamentos</small>
-    </div>
-</div>
+    <script src="script.js"></script>
+</body>
+</html>
