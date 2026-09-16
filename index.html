@@ -29,15 +29,18 @@
         </aside>
 
         <!-- MAIN -->
-        <main class="main">
+        <div class="main">
+            <!-- TOPBAR -->
             <header class="topbar">
                 <div class="status">
                     <span class="online"></span> Assistente de reparos • Online
                 </div>
             </header>
 
+            <!-- CONTEÚDO DAS PÁGINAS -->
             <div class="content">
-                <!-- PÁGINA INICIAL -->
+                
+                <!-- PÁGINA INÍCIO -->
                 <div id="inicio" class="page active-page">
                     <div class="hero">
                         <h1>O que precisa <span>consertar</span>?</h1>
@@ -46,17 +49,17 @@
 
                     <div class="repair-card">
                         <div class="chat-result" id="chatResult">
-                            <!-- Mensagens do chat aparecem aqui -->
+                            <!-- As mensagens do chat aparecem dinamicamente aqui -->
                         </div>
 
                         <div class="attachment-area" id="attachmentArea" style="display: none;">
-                            <!-- Área de anexos -->
+                            <!-- Anexos de imagem/arquivo -->
                         </div>
 
                         <div class="chat-input-area">
                             <textarea id="problemaInput" placeholder="Descreva o problema ou envie uma foto..."></textarea>
-                            <button class="icon-button" id="micBtn">🎤</button>
-                            <button class="send-button" id="enviarBtn">➔</button>
+                            <button class="icon-button" id="micBtn" title="Falar por voz">🎤</button>
+                            <button class="send-button" id="enviarBtn" title="Enviar">➔</button>
                         </div>
 
                         <div class="upload-buttons">
@@ -65,9 +68,45 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- PÁGINA MEUS REPAROS -->
+                <div id="reparos" class="page">
+                    <div class="simple-page">
+                        <h2>Meus reparos</h2>
+                        <p>Histórico dos seus diagnósticos salvos.</p>
+                    </div>
+                </div>
+
+                <!-- PÁGINA BIBLIOTECA -->
+                <div id="biblioteca" class="page">
+                    <div class="simple-page">
+                        <h2>Biblioteca</h2>
+                        <p>Manuais e guias de referência rápida.</p>
+                    </div>
+                </div>
+
+                <!-- PÁGINA CONFIGURAÇÕES -->
+                <div id="configuracoes" class="page">
+                    <div class="simple-page">
+                        <h2>Configurações</h2>
+                        <p>Gerencie as preferências da sua conta e do assistente.</p>
+                    </div>
+                </div>
+
             </div>
-        </main>
+        </div>
     </div>
+
+    <!-- MODAL DE PERFIL OU OUTROS -->
+    <div class="modal" id="perfilModal">
+        <div class="modal-box">
+            <button class="close" id="fecharModalBtn">&times;</button>
+            <div class="profile-avatar">RR</div>
+            <p>Seu perfil</p>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" style="display: none;">
 
     <script src="script.js"></script>
 </body>
