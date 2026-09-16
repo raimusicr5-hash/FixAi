@@ -1,213 +1,999 @@
-const novoDiagnosticoBtn = document.getElementById("novoDiagnosticoBtn");
-const navItems = document.querySelectorAll(".nav-item");
-const pages = document.querySelectorAll(".page");
+// =====================================
+// FIXLYRA
+// CHAT COM IA
+// =====================================
 
-const chatResult = document.getElementById("chatResult");
-const problemaInput = document.getElementById("problemaInput");
-const enviarBtn = document.getElementById("enviarBtn");
-const micBtn = document.getElementById("micBtn");
-const tirarFotoBtn = document.getElementById("tirarFotoBtn");
-const enviarArquivoBtn = document.getElementById("enviarArquivoBtn");
-const fileInput = document.getElementById("fileInput");
-const attachmentArea = document.getElementById("attachmentArea");
+const problem =
+    document.getElementById("problem");
+
+const result =
+    document.getElementById("result");
+
+const attachmentArea =
+    document.getElementById("attachmentArea");
+
+const micButton =
+    document.getElementById("micButton");
 
 let imagemBase64 = null;
-let historicoConversa = [];
 
-// Navegação entre páginas
-navItems.forEach(item => {
-    item.addEventListener("click", () => {
-        const targetPage = item.getAttribute("data-page");
+let conversa = [];
 
-        navItems.forEach(nav => nav.classList.remove("active"));
-        item.classList.add("active");
+// =====================================
+// NAVEGAÇÃO
+// =====================================
 
-        pages.forEach(page => {
-            if (page.id === targetPage) {
-                page.classList.add("active-page");
-            } else {
-                page.classList.remove("active-page");
-            }
-        });
+const navButtons =
+    document.querySelectorAll(".nav-item");
+
+navButtons.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        abrirPagina(
+            button.dataset.page
+        );
+
     });
+
 });
 
-novoDiagnosticoBtn.addEventListener("click", () => {
-    chatResult.innerHTML = "";
-    historicoConversa = [];
-    problemaInput.value = "";
-    removerAnexo();
-    
-    navItems.forEach(nav => nav.classList.remove("active"));
-    document.querySelector('[data-page="inicio"]').classList.add("active");
-    pages.forEach(page => page.classList.remove("active-page"));
-    document.getElementById("inicio").classList.add("active-page");
-});
+function abrirPagina(page) {
 
-// Envio de arquivo / foto
-enviarArquivoBtn.addEventListener("click", () => fileInput.click());
-tirarFotoBtn.addEventListener("click", () => fileInput.click());
+    document
+        .querySelectorAll(".page")
+        .forEach(p => {
 
-fileInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+            p.classList.remove(
+                "active-page"
+            );
 
-    const reader = new FileReader();
-    reader.onload = function(uploadEvent) {
-        imagemBase64 = uploadEvent.target.result;
-        
-        attachmentArea.style.display = "block";
-        attachmentArea.innerHTML = `
-            <div class="attachment">
-                <img src="${imagemBase64}" alt="Anexo">
-                <span>Imagem anexada com sucesso!</span>
-                <button onclick="removerAnexo()" style="background:none; border:none; color:red; cursor:pointer; margin-left:auto;">✕</button>
-            </div>
-        `;
-    };
-    reader.readAsDataURL(file);
-});
+        });
 
-window.removerAnexo = function() {
-    imagemBase64 = null;
-    fileInput.value = "";
-    attachmentArea.style.display = "none";
-    attachmentArea.innerHTML = "";
-};
+    navButtons.forEach(button => {
 
-// Enviar mensagem para a IA
-async function enviarMensagem() {
-    const texto = problemaInput.value.trim();
+        button.classList.remove(
+            "active"
+        );
 
-    if (!texto && !imagemBase64) return;
+    });
 
-    // Adiciona mensagem do usuário na tela
-    adicionarMensagemNaTela(texto, "user", imagemBase64);
+    const pagina =
+        document.getElementById(
+            page + "Page"
+        );
 
-    const mensagemAtual = texto;
-    const imagemAtual = imagemBase64;
+    if (pagina) {
 
-    // Limpa campos
-    problemaInput.value = "";
-    removerAnexo();
+        pagina.classList.add(
+            "active-page"
+        );
 
-    // Mostra indicador de carregamento
-    const loadingId = mostrarCarregamento();
+    }
+
+    const botao =
+        document.querySelector(
+            `[data-page="${page}"]`
+        );
+
+    if (botao) {
+
+        botao.classList.add(
+            "active"
+        );
+
+    }
+
+}
+
+// =====================================
+// NOVO DIAGNÓSTICO
+// =====================================
+
+document
+    .getElementById("newDiagnosis")
+    .addEventListener("click", () => {
+
+        abrirPagina("home");
+
+        problem.value = "";
+
+        result.innerHTML = "";
+
+        result.classList.remove(
+            "show"
+        );
+
+        attachmentArea.innerHTML = "";
+
+        imagemBase64 = null;
+
+        conversa = [];
+
+        problem.focus();
+
+    });
+
+// =====================================
+// CATEGORIAS
+// =====================================
+
+document
+    .querySelectorAll(".category")
+    .forEach(category => {
+
+        category.addEventListener(
+            "click",
+            () => {
+
+                const nome =
+                    category.dataset.category;
+
+                problem.value =
+                    `Quero diagnosticar um equipamento da categoria ${nome}.`;
+
+                problem.focus();
+
+            }
+        );
+
+    });
+
+// =====================================
+// ENVIAR MENSAGEM
+// =====================================
+
+document
+    .getElementById("analyzeButton")
+    .addEventListener(
+        "click",
+        analisarProblema
+    );
+
+async function analisarProblema() {
+
+    const texto =
+        problem.value.trim();
+
+    if (
+        !texto &&
+        !imagemBase64
+    ) {
+
+        return;
+
+    }
+
+    if (texto) {
+
+        conversa.push({
+
+            role: "user",
+
+            text: texto
+
+        });
+
+    }
+
+    problem.value = "";
+
+    adicionarMensagem(
+        "user",
+        texto
+    );
+
+    adicionarLoading();
 
     try {
-        const resposta = await fetch("/api/analisar", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                problema: mensagemAtual,
-                imagem: imagemAtual,
-                historico: historicoConversa
-            })
-        });
 
-        const dados = await resposta.json();
+        const response =
+            await fetch(
+                "/api/analisar",
+                {
 
-        removerCarregamento(loadingId);
+                    method: "POST",
 
-        if (!resposta.ok) {
-            throw new Error(dados.erro || "Erro ao se comunicar com o servidor.");
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        problema:
+                            texto,
+
+                        imagem:
+                            imagemBase64,
+
+                        historico:
+                            conversa
+
+                    })
+
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.erro ||
+                "Erro desconhecido."
+            );
+
         }
 
-        adicionarMensagemNaTela(dados.resposta, "assistant");
+        removerLoading();
 
-        // Salva no histórico
-        historicoConversa.push({ role: "user", text: mensagemAtual || "[Imagem enviada]" });
-        historicoConversa.push({ role: "assistant", text: dados.resposta });
+        conversa.push({
+
+            role: "assistant",
+
+            text:
+                data.resposta
+
+        });
+
+        adicionarMensagem(
+            "assistant",
+            data.resposta
+        );
+
+        salvarReparo(texto);
+
+        imagemBase64 = null;
+
+        attachmentArea.innerHTML = "";
 
     } catch (error) {
-        removerCarregamento(loadingId);
-        adicionarMensagemNaTela("Erro: " + error.message, "assistant");
+
+        console.error(error);
+
+        removerLoading();
+
+        adicionarMensagem(
+            "assistant",
+            "Tente Novamente"
+        );
+
     }
+
 }
 
-enviarBtn.addEventListener("click", enviarMensagem);
+// =====================================
+// MOSTRAR MENSAGEM
+// =====================================
 
-problemaInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        enviarMensagem();
-    }
-});
+function adicionarMensagem(
+    tipo,
+    texto
+) {
 
-function adicionarMensagemNaTela(texto, remetente, imagem = null) {
-    const msgDiv = document.createElement("div");
-    msgDiv.className = `chat-message ${remetente}`;
+    const mensagem =
+        document.createElement(
+            "div"
+        );
 
-    let conteudoImagem = imagem ? `<img src="${imagem}" style="max-width:100%; border-radius:8px; margin-bottom:8px;" />` : "";
-    let textoFormatado = texto ? texto.replace(/\n/g, "<br>") : "";
+    mensagem.className =
+        `chat-message ${tipo}`;
 
-    msgDiv.innerHTML = `
-        ${remetente === 'assistant' ? '<div class="chat-avatar">🤖</div>' : ''}
-        <div class="chat-bubble">
-            ${conteudoImagem}
-            ${textoFormatado}
+    mensagem.innerHTML = `
+
+        <div class="chat-avatar">
+
+            ${tipo === "user"
+                ? "👤"
+                : "🤖"
+            }
+
         </div>
-        ${remetente === 'user' ? '<div class="chat-avatar" style="background:#6957d9;">👤</div>' : ''}
+
+        <div class="chat-bubble">
+
+            ${formatarResposta(texto)}
+
+        </div>
+
     `;
 
-    chatResult.appendChild(msgDiv);
-    chatResult.scrollTop = chatResult.scrollHeight;
-}
+    result.appendChild(
+        mensagem
+    );
 
-function mostrarCarregamento() {
-    const id = "loading-" + Date.now();
-    const msgDiv = document.createElement("div");
-    msgDiv.className = "chat-message assistant";
-    msgDiv.id = id;
+    result.classList.add(
+        "show"
+    );
 
-    msgDiv.innerHTML = `
-        <div class="chat-avatar">🤖</div>
-        <div class="chat-bubble">
-            <div class="ai-loading">
-                <div class="spinner"></div>
-                <p>Analisando...</p>
-            </div>
-        </div>
-    `;
+    mensagem.scrollIntoView({
 
-    chatResult.appendChild(msgDiv);
-    chatResult.scrollTop = chatResult.scrollHeight;
-    return id;
-}
+        behavior: "smooth",
 
-function removerCarregamento(id) {
-    const elemento = document.getElementById(id);
-    if (elemento) elemento.remove();
-}
+        block: "nearest"
 
-// Reconhecimento de voz (Microfone)
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = 'pt-BR';
-    recognition.interimResults = false;
-
-    micBtn.addEventListener("click", () => {
-        recognition.start();
-        micBtn.style.background = "#6957d9";
     });
 
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        problemaInput.value += (problemaInput.value ? " " : "") + transcript;
-        micBtn.style.background = "";
+}
+
+// =====================================
+// LOADING
+// =====================================
+
+function adicionarLoading() {
+
+    const loading =
+        document.createElement(
+            "div"
+        );
+
+    loading.id =
+        "chatLoading";
+
+    loading.className =
+        "chat-message assistant";
+
+    loading.innerHTML = `
+
+        <div class="chat-avatar">
+            🤖
+        </div>
+
+        <div class="chat-bubble">
+
+            <div class="ai-loading">
+
+                <div class="spinner"></div>
+
+                <p>
+                    O Fixlyra está pensando...
+                </p>
+
+            </div>
+
+        </div>
+
+    `;
+
+    result.appendChild(
+        loading
+    );
+
+    result.classList.add(
+        "show"
+    );
+
+    loading.scrollIntoView({
+
+        behavior: "smooth",
+
+        block: "nearest"
+
+    });
+
+}
+
+// =====================================
+// REMOVER LOADING
+// =====================================
+
+function removerLoading() {
+
+    const loading =
+        document.getElementById(
+            "chatLoading"
+        );
+
+    if (loading) {
+
+        loading.remove();
+
+    }
+
+}
+
+// =====================================
+// FORMATAR RESPOSTA
+// =====================================
+
+function formatarResposta(texto) {
+
+    let html =
+        escaparHTML(texto);
+
+    html =
+        html.replace(
+            /🔍 DIAGNÓSTICO PROVÁVEL/g,
+            "<h3>🔍 DIAGNÓSTICO PROVÁVEL</h3>"
+        );
+
+    html =
+        html.replace(
+            /⚠️ POSSÍVEIS CAUSAS/g,
+            "<h3>⚠️ POSSÍVEIS CAUSAS</h3>"
+        );
+
+    html =
+        html.replace(
+            /🧪 TESTES/g,
+            "<h3>🧪 TESTES</h3>"
+        );
+
+    html =
+        html.replace(
+            /🔧 FERRAMENTAS/g,
+            "<h3>🔧 FERRAMENTAS</h3>"
+        );
+
+    html =
+        html.replace(
+            /🛠️ PASSO A PASSO/g,
+            "<h3>🛠️ PASSO A PASSO</h3>"
+        );
+
+    html =
+        html.replace(
+            /⚠️ SEGURANÇA/g,
+            "<h3>⚠️ SEGURANÇA</h3>"
+        );
+
+    html =
+        html.replace(
+            /❓ PRÓXIMA PERGUNTA/g,
+            "<h3>❓ PRÓXIMA PERGUNTA</h3>"
+        );
+
+    html =
+        html.replace(
+            /\n/g,
+            "<br>"
+        );
+
+    return html;
+
+}
+
+// =====================================
+// FOTO
+// =====================================
+
+const photoInput =
+    document.getElementById(
+        "photoInput"
+    );
+
+document
+    .getElementById("photoButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            photoInput.click();
+
+        }
+    );
+
+photoInput.addEventListener(
+    "change",
+    async () => {
+
+        const file =
+            photoInput.files[0];
+
+        if (!file) return;
+
+        imagemBase64 =
+            await arquivoParaBase64(
+                file
+            );
+
+        mostrarArquivo(
+            file,
+            true
+        );
+
+    }
+);
+
+// =====================================
+// VÍDEO
+// =====================================
+
+const videoInput =
+    document.getElementById(
+        "videoInput"
+    );
+
+document
+    .getElementById("videoButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            videoInput.click();
+
+        }
+    );
+
+videoInput.addEventListener(
+    "change",
+    () => {
+
+        const file =
+            videoInput.files[0];
+
+        if (!file) return;
+
+        mostrarArquivo(
+            file,
+            false
+        );
+
+    }
+);
+
+// =====================================
+// ARQUIVO
+// =====================================
+
+const fileInput =
+    document.getElementById(
+        "fileInput"
+    );
+
+document
+    .getElementById("fileButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            fileInput.click();
+
+        }
+    );
+
+fileInput.addEventListener(
+    "change",
+    () => {
+
+        const file =
+            fileInput.files[0];
+
+        if (!file) return;
+
+        mostrarArquivo(
+            file,
+            false
+        );
+
+    }
+);
+
+// =====================================
+// CONVERTER ARQUIVO
+// =====================================
+
+function arquivoParaBase64(file) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+            reader.onload = () => {
+
+                resolve(
+                    reader.result
+                );
+
+            };
+
+            reader.onerror =
+                reject;
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+
+}
+
+// =====================================
+// MOSTRAR ARQUIVO
+// =====================================
+
+function mostrarArquivo(
+    file,
+    imagem
+) {
+
+    attachmentArea.innerHTML = "";
+
+    const container =
+        document.createElement(
+            "div"
+        );
+
+    container.className =
+        "attachment";
+
+    if (imagem) {
+
+        const img =
+            document.createElement(
+                "img"
+            );
+
+        img.src =
+            URL.createObjectURL(
+                file
+            );
+
+        container.appendChild(
+            img
+        );
+
+    } else {
+
+        const icon =
+            document.createElement(
+                "span"
+            );
+
+        icon.textContent =
+            "📎";
+
+        icon.style.fontSize =
+            "25px";
+
+        container.appendChild(
+            icon
+        );
+
+    }
+
+    const info =
+        document.createElement(
+            "div"
+        );
+
+    info.innerHTML = `
+
+        <strong>
+            ${escaparHTML(file.name)}
+        </strong>
+
+        <br>
+
+        <small>
+            ${(file.size / 1024 / 1024).toFixed(2)}
+            MB
+        </small>
+
+    `;
+
+    container.appendChild(
+        info
+    );
+
+    attachmentArea.appendChild(
+        container
+    );
+
+}
+
+// =====================================
+// MICROFONE
+// =====================================
+
+let recognition = null;
+
+let ouvindo = false;
+
+function iniciarVoz() {
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+
+        alert(
+            "Seu navegador não possui reconhecimento de voz."
+        );
+
+        return;
+
+    }
+
+    if (ouvindo) {
+
+        recognition.stop();
+
+        return;
+
+    }
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.lang =
+        "pt-BR";
+
+    recognition.continuous =
+        false;
+
+    recognition.interimResults =
+        false;
+
+    recognition.onstart = () => {
+
+        ouvindo = true;
+
+        micButton.textContent =
+            "🔴";
+
+        micButton.title =
+            "Ouvindo...";
+
     };
 
-    recognition.onerror = () => {
-        micBtn.style.background = "";
-    };
+    recognition.onresult =
+        event => {
+
+            const texto =
+                event.results[0][0]
+                    .transcript
+                    .trim();
+
+            if (!texto) return;
+
+            problem.value =
+                texto;
+
+            analisarProblema();
+
+        };
 
     recognition.onend = () => {
-        micBtn.style.background = "";
+
+        ouvindo = false;
+
+        micButton.textContent =
+            "🎙️";
+
+        micButton.title =
+            "Falar";
+
     };
-} else {
-    micBtn.style.display = "none";
+
+    recognition.onerror =
+        () => {
+
+            ouvindo = false;
+
+            micButton.textContent =
+                "🎙️";
+
+            micButton.title =
+                "Falar";
+
+        };
+
+    recognition.start();
+
+}
+
+micButton.addEventListener(
+    "click",
+    iniciarVoz
+);
+
+// =====================================
+// PERFIL
+// =====================================
+
+const profileModal =
+    document.getElementById(
+        "profileModal"
+    );
+
+document
+    .getElementById("profileButton")
+    .addEventListener(
+        "click",
+        () => {
+
+            profileModal.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+document
+    .getElementById("closeProfile")
+    .addEventListener(
+        "click",
+        () => {
+
+            profileModal.classList.remove(
+                "show"
+            );
+
+        }
+    );
+
+profileModal.addEventListener(
+    "click",
+    event => {
+
+        if (
+            event.target ===
+            profileModal
+        ) {
+
+            profileModal.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+);
+
+// =====================================
+// HISTÓRICO
+// =====================================
+
+function salvarReparo(texto) {
+
+    if (!texto) return;
+
+    let reparos =
+        JSON.parse(
+            localStorage.getItem(
+                "fixlyra_reparos"
+            )
+        ) || [];
+
+    reparos.unshift({
+
+        problema: texto,
+
+        data:
+            new Date()
+                .toLocaleString(
+                    "pt-BR"
+                )
+
+    });
+
+    reparos =
+        reparos.slice(
+            0,
+            30
+        );
+
+    localStorage.setItem(
+        "fixlyra_reparos",
+        JSON.stringify(
+            reparos
+        )
+    );
+
+    carregarHistorico();
+
+}
+
+// =====================================
+// CARREGAR HISTÓRICO
+// =====================================
+
+function carregarHistorico() {
+
+    const area =
+        document.getElementById(
+            "repairHistory"
+        );
+
+    let reparos =
+        JSON.parse(
+            localStorage.getItem(
+                "fixlyra_reparos"
+            )
+        ) || [];
+
+    if (
+        reparos.length === 0
+    ) {
+
+        area.innerHTML = `
+
+            <div
+                class="result"
+                style="display:block;"
+            >
+
+                Você ainda não possui
+                reparos salvos.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    area.innerHTML = "";
+
+    reparos.forEach(
+        reparo => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.className =
+                "result";
+
+            div.style.display =
+                "block";
+
+            div.style.marginBottom =
+                "12px";
+
+            div.innerHTML = `
+
+                <strong>
+                    🔧
+                    ${escaparHTML(
+                        reparo.problema
+                    )}
+                </strong>
+
+                <br>
+
+                <small>
+                    ${reparo.data}
+                </small>
+
+            `;
+
+            area.appendChild(
+                div
+            );
+
+        }
+    );
+
+}
+
+carregarHistorico();
+
+// =====================================
+// ESCAPAR HTML
+// =====================================
+
+function escaparHTML(texto) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        texto;
+
+    return div.innerHTML;
+
 }
