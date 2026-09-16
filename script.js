@@ -1,11 +1,6 @@
 // =====================================
-// FIXAI
+// FIXLYRA
 // CHAT COM IA
-// =====================================
-
-
-// =====================================
-// ELEMENTOS
 // =====================================
 
 const problem =
@@ -20,15 +15,9 @@ const attachmentArea =
 const micButton =
     document.getElementById("micButton");
 
-
-// =====================================
-// VARIÁVEIS
-// =====================================
-
 let imagemBase64 = null;
 
 let conversa = [];
-
 
 // =====================================
 // NAVEGAÇÃO
@@ -36,7 +25,6 @@ let conversa = [];
 
 const navButtons =
     document.querySelectorAll(".nav-item");
-
 
 navButtons.forEach(button => {
 
@@ -50,7 +38,6 @@ navButtons.forEach(button => {
 
 });
 
-
 function abrirPagina(page) {
 
     document
@@ -63,7 +50,6 @@ function abrirPagina(page) {
 
         });
 
-
     navButtons.forEach(button => {
 
         button.classList.remove(
@@ -72,12 +58,10 @@ function abrirPagina(page) {
 
     });
 
-
     const pagina =
         document.getElementById(
             page + "Page"
         );
-
 
     if (pagina) {
 
@@ -87,12 +71,10 @@ function abrirPagina(page) {
 
     }
 
-
     const botao =
         document.querySelector(
             `[data-page="${page}"]`
         );
-
 
     if (botao) {
 
@@ -103,7 +85,6 @@ function abrirPagina(page) {
     }
 
 }
-
 
 // =====================================
 // NOVO DIAGNÓSTICO
@@ -133,7 +114,6 @@ document
 
     });
 
-
 // =====================================
 // CATEGORIAS
 // =====================================
@@ -149,10 +129,8 @@ document
                 const nome =
                     category.dataset.category;
 
-
                 problem.value =
                     `Quero diagnosticar um equipamento da categoria ${nome}.`;
-
 
                 problem.focus();
 
@@ -160,7 +138,6 @@ document
         );
 
     });
-
 
 // =====================================
 // ENVIAR MENSAGEM
@@ -173,12 +150,10 @@ document
         analisarProblema
     );
 
-
 async function analisarProblema() {
 
     const texto =
         problem.value.trim();
-
 
     if (
         !texto &&
@@ -188,11 +163,6 @@ async function analisarProblema() {
         return;
 
     }
-
-
-    // =================================
-    // GUARDAR MENSAGEM DO USUÁRIO
-    // =================================
 
     if (texto) {
 
@@ -206,27 +176,14 @@ async function analisarProblema() {
 
     }
 
-
-    // Limpa a caixa
     problem.value = "";
-
-
-    // =================================
-    // MOSTRAR MENSAGEM DO USUÁRIO
-    // =================================
 
     adicionarMensagem(
         "user",
         texto
     );
 
-
-    // =================================
-    // LOADING
-    // =================================
-
     adicionarLoading();
-
 
     try {
 
@@ -260,10 +217,8 @@ async function analisarProblema() {
                 }
             );
 
-
         const data =
             await response.json();
-
 
         if (!response.ok) {
 
@@ -274,17 +229,7 @@ async function analisarProblema() {
 
         }
 
-
-        // =================================
-        // REMOVER LOADING
-        // =================================
-
         removerLoading();
-
-
-        // =================================
-        // GUARDAR RESPOSTA
-        // =================================
 
         conversa.push({
 
@@ -295,53 +240,31 @@ async function analisarProblema() {
 
         });
 
-
-        // =================================
-        // MOSTRAR RESPOSTA
-        // =================================
-
         adicionarMensagem(
-
             "assistant",
-
             data.resposta
-
         );
 
-
         salvarReparo(texto);
-
-
-        // =================================
-        // LIMPAR IMAGEM
-        // =================================
 
         imagemBase64 = null;
 
         attachmentArea.innerHTML = "";
 
-
     } catch (error) {
 
         console.error(error);
 
-
         removerLoading();
 
-
         adicionarMensagem(
-
             "assistant",
-
-            "❌ Não foi possível realizar a análise.\n\n" +
-            error.message
-
+            "Tente Novamente"
         );
 
     }
 
 }
-
 
 // =====================================
 // MOSTRAR MENSAGEM
@@ -357,10 +280,8 @@ function adicionarMensagem(
             "div"
         );
 
-
     mensagem.className =
         `chat-message ${tipo}`;
-
 
     mensagem.innerHTML = `
 
@@ -381,16 +302,13 @@ function adicionarMensagem(
 
     `;
 
-
     result.appendChild(
         mensagem
     );
 
-
     result.classList.add(
         "show"
     );
-
 
     mensagem.scrollIntoView({
 
@@ -401,7 +319,6 @@ function adicionarMensagem(
     });
 
 }
-
 
 // =====================================
 // LOADING
@@ -414,14 +331,11 @@ function adicionarLoading() {
             "div"
         );
 
-
     loading.id =
         "chatLoading";
 
-
     loading.className =
         "chat-message assistant";
-
 
     loading.innerHTML = `
 
@@ -436,7 +350,7 @@ function adicionarLoading() {
                 <div class="spinner"></div>
 
                 <p>
-                    O FixAI está pensando...
+                    O Fixlyra está pensando...
                 </p>
 
             </div>
@@ -445,16 +359,13 @@ function adicionarLoading() {
 
     `;
 
-
     result.appendChild(
         loading
     );
 
-
     result.classList.add(
         "show"
     );
-
 
     loading.scrollIntoView({
 
@@ -465,7 +376,6 @@ function adicionarLoading() {
     });
 
 }
-
 
 // =====================================
 // REMOVER LOADING
@@ -478,7 +388,6 @@ function removerLoading() {
             "chatLoading"
         );
 
-
     if (loading) {
 
         loading.remove();
@@ -486,7 +395,6 @@ function removerLoading() {
     }
 
 }
-
 
 // =====================================
 // FORMATAR RESPOSTA
@@ -497,13 +405,11 @@ function formatarResposta(texto) {
     let html =
         escaparHTML(texto);
 
-
     html =
         html.replace(
             /🔍 DIAGNÓSTICO PROVÁVEL/g,
             "<h3>🔍 DIAGNÓSTICO PROVÁVEL</h3>"
         );
-
 
     html =
         html.replace(
@@ -511,13 +417,11 @@ function formatarResposta(texto) {
             "<h3>⚠️ POSSÍVEIS CAUSAS</h3>"
         );
 
-
     html =
         html.replace(
             /🧪 TESTES/g,
             "<h3>🧪 TESTES</h3>"
         );
-
 
     html =
         html.replace(
@@ -525,13 +429,11 @@ function formatarResposta(texto) {
             "<h3>🔧 FERRAMENTAS</h3>"
         );
 
-
     html =
         html.replace(
             /🛠️ PASSO A PASSO/g,
             "<h3>🛠️ PASSO A PASSO</h3>"
         );
-
 
     html =
         html.replace(
@@ -539,13 +441,11 @@ function formatarResposta(texto) {
             "<h3>⚠️ SEGURANÇA</h3>"
         );
 
-
     html =
         html.replace(
             /❓ PRÓXIMA PERGUNTA/g,
             "<h3>❓ PRÓXIMA PERGUNTA</h3>"
         );
-
 
     html =
         html.replace(
@@ -553,11 +453,9 @@ function formatarResposta(texto) {
             "<br>"
         );
 
-
     return html;
 
 }
-
 
 // =====================================
 // FOTO
@@ -567,7 +465,6 @@ const photoInput =
     document.getElementById(
         "photoInput"
     );
-
 
 document
     .getElementById("photoButton")
@@ -580,7 +477,6 @@ document
         }
     );
 
-
 photoInput.addEventListener(
     "change",
     async () => {
@@ -588,15 +484,12 @@ photoInput.addEventListener(
         const file =
             photoInput.files[0];
 
-
         if (!file) return;
-
 
         imagemBase64 =
             await arquivoParaBase64(
                 file
             );
-
 
         mostrarArquivo(
             file,
@@ -606,7 +499,6 @@ photoInput.addEventListener(
     }
 );
 
-
 // =====================================
 // VÍDEO
 // =====================================
@@ -615,7 +507,6 @@ const videoInput =
     document.getElementById(
         "videoInput"
     );
-
 
 document
     .getElementById("videoButton")
@@ -628,7 +519,6 @@ document
         }
     );
 
-
 videoInput.addEventListener(
     "change",
     () => {
@@ -636,9 +526,7 @@ videoInput.addEventListener(
         const file =
             videoInput.files[0];
 
-
         if (!file) return;
-
 
         mostrarArquivo(
             file,
@@ -648,7 +536,6 @@ videoInput.addEventListener(
     }
 );
 
-
 // =====================================
 // ARQUIVO
 // =====================================
@@ -657,7 +544,6 @@ const fileInput =
     document.getElementById(
         "fileInput"
     );
-
 
 document
     .getElementById("fileButton")
@@ -670,7 +556,6 @@ document
         }
     );
 
-
 fileInput.addEventListener(
     "change",
     () => {
@@ -678,9 +563,7 @@ fileInput.addEventListener(
         const file =
             fileInput.files[0];
 
-
         if (!file) return;
-
 
         mostrarArquivo(
             file,
@@ -689,7 +572,6 @@ fileInput.addEventListener(
 
     }
 );
-
 
 // =====================================
 // CONVERTER ARQUIVO
@@ -703,7 +585,6 @@ function arquivoParaBase64(file) {
             const reader =
                 new FileReader();
 
-
             reader.onload = () => {
 
                 resolve(
@@ -712,10 +593,8 @@ function arquivoParaBase64(file) {
 
             };
 
-
             reader.onerror =
                 reject;
-
 
             reader.readAsDataURL(
                 file
@@ -725,7 +604,6 @@ function arquivoParaBase64(file) {
     );
 
 }
-
 
 // =====================================
 // MOSTRAR ARQUIVO
@@ -738,16 +616,13 @@ function mostrarArquivo(
 
     attachmentArea.innerHTML = "";
 
-
     const container =
         document.createElement(
             "div"
         );
 
-
     container.className =
         "attachment";
-
 
     if (imagem) {
 
@@ -756,12 +631,10 @@ function mostrarArquivo(
                 "img"
             );
 
-
         img.src =
             URL.createObjectURL(
                 file
             );
-
 
         container.appendChild(
             img
@@ -774,14 +647,11 @@ function mostrarArquivo(
                 "span"
             );
 
-
         icon.textContent =
             "📎";
 
-
         icon.style.fontSize =
             "25px";
-
 
         container.appendChild(
             icon
@@ -789,12 +659,10 @@ function mostrarArquivo(
 
     }
 
-
     const info =
         document.createElement(
             "div"
         );
-
 
     info.innerHTML = `
 
@@ -811,18 +679,15 @@ function mostrarArquivo(
 
     `;
 
-
     container.appendChild(
         info
     );
-
 
     attachmentArea.appendChild(
         container
     );
 
 }
-
 
 // =====================================
 // MICROFONE
@@ -832,13 +697,11 @@ let recognition = null;
 
 let ouvindo = false;
 
-
 function iniciarVoz() {
 
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
-
 
     if (!SpeechRecognition) {
 
@@ -850,7 +713,6 @@ function iniciarVoz() {
 
     }
 
-
     if (ouvindo) {
 
         recognition.stop();
@@ -859,22 +721,17 @@ function iniciarVoz() {
 
     }
 
-
     recognition =
         new SpeechRecognition();
-
 
     recognition.lang =
         "pt-BR";
 
-
     recognition.continuous =
         false;
 
-
     recognition.interimResults =
         false;
-
 
     recognition.onstart = () => {
 
@@ -888,7 +745,6 @@ function iniciarVoz() {
 
     };
 
-
     recognition.onresult =
         event => {
 
@@ -897,20 +753,14 @@ function iniciarVoz() {
                     .transcript
                     .trim();
 
-
             if (!texto) return;
-
 
             problem.value =
                 texto;
 
-
-            // Não fala a resposta.
-            // Apenas envia para o chat.
             analisarProblema();
 
         };
-
 
     recognition.onend = () => {
 
@@ -923,7 +773,6 @@ function iniciarVoz() {
             "Falar";
 
     };
-
 
     recognition.onerror =
         () => {
@@ -938,17 +787,14 @@ function iniciarVoz() {
 
         };
 
-
     recognition.start();
 
 }
-
 
 micButton.addEventListener(
     "click",
     iniciarVoz
 );
-
 
 // =====================================
 // PERFIL
@@ -958,7 +804,6 @@ const profileModal =
     document.getElementById(
         "profileModal"
     );
-
 
 document
     .getElementById("profileButton")
@@ -973,7 +818,6 @@ document
         }
     );
 
-
 document
     .getElementById("closeProfile")
     .addEventListener(
@@ -986,7 +830,6 @@ document
 
         }
     );
-
 
 profileModal.addEventListener(
     "click",
@@ -1006,7 +849,6 @@ profileModal.addEventListener(
     }
 );
 
-
 // =====================================
 // HISTÓRICO
 // =====================================
@@ -1015,14 +857,12 @@ function salvarReparo(texto) {
 
     if (!texto) return;
 
-
     let reparos =
         JSON.parse(
             localStorage.getItem(
-                "fixai_reparos"
+                "fixlyra_reparos"
             )
         ) || [];
-
 
     reparos.unshift({
 
@@ -1036,26 +876,22 @@ function salvarReparo(texto) {
 
     });
 
-
     reparos =
         reparos.slice(
             0,
             30
         );
 
-
     localStorage.setItem(
-        "fixai_reparos",
+        "fixlyra_reparos",
         JSON.stringify(
             reparos
         )
     );
 
-
     carregarHistorico();
 
 }
-
 
 // =====================================
 // CARREGAR HISTÓRICO
@@ -1068,14 +904,12 @@ function carregarHistorico() {
             "repairHistory"
         );
 
-
     let reparos =
         JSON.parse(
             localStorage.getItem(
-                "fixai_reparos"
+                "fixlyra_reparos"
             )
         ) || [];
-
 
     if (
         reparos.length === 0
@@ -1088,7 +922,7 @@ function carregarHistorico() {
                 style="display:block;"
             >
 
-                🕘 Você ainda não possui
+                Você ainda não possui
                 reparos salvos.
 
             </div>
@@ -1099,9 +933,7 @@ function carregarHistorico() {
 
     }
 
-
     area.innerHTML = "";
-
 
     reparos.forEach(
         reparo => {
@@ -1111,18 +943,14 @@ function carregarHistorico() {
                     "div"
                 );
 
-
             div.className =
                 "result";
-
 
             div.style.display =
                 "block";
 
-
             div.style.marginBottom =
                 "12px";
-
 
             div.innerHTML = `
 
@@ -1141,7 +969,6 @@ function carregarHistorico() {
 
             `;
 
-
             area.appendChild(
                 div
             );
@@ -1151,9 +978,7 @@ function carregarHistorico() {
 
 }
 
-
 carregarHistorico();
-
 
 // =====================================
 // ESCAPAR HTML
@@ -1166,10 +991,8 @@ function escaparHTML(texto) {
             "div"
         );
 
-
     div.textContent =
         texto;
-
 
     return div.innerHTML;
 
