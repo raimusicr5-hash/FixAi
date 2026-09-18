@@ -1,89 +1,59 @@
 // =====================================
-// FIXLYRA
+// FIXAI
 // CHAT COM IA
 // =====================================
 
-const problem =
-    document.getElementById("problem");
+// =====================================
+// ELEMENTOS
+// =====================================
 
-const result =
-    document.getElementById("result");
+const problem = document.getElementById("problem");
+const result = document.getElementById("result");
+const attachmentArea = document.getElementById("attachmentArea");
+const micButton = document.getElementById("micButton");
 
-const attachmentArea =
-    document.getElementById("attachmentArea");
-
-const micButton =
-    document.getElementById("micButton");
+// =====================================
+// VARIÁVEIS
+// =====================================
 
 let imagemBase64 = null;
-
 let conversa = [];
 
 // =====================================
 // NAVEGAÇÃO
 // =====================================
 
-const navButtons =
-    document.querySelectorAll(".nav-item");
+const navButtons = document.querySelectorAll(".nav-item");
 
 navButtons.forEach(button => {
-
     button.addEventListener("click", () => {
-
-        abrirPagina(
-            button.dataset.page
-        );
-
+        abrirPagina(button.dataset.page);
     });
-
 });
 
 function abrirPagina(page) {
 
-    document
-        .querySelectorAll(".page")
-        .forEach(p => {
-
-            p.classList.remove(
-                "active-page"
-            );
-
-        });
-
-    navButtons.forEach(button => {
-
-        button.classList.remove(
-            "active"
-        );
-
+    document.querySelectorAll(".page").forEach(p => {
+        p.classList.remove("active-page");
     });
 
-    const pagina =
-        document.getElementById(
-            page + "Page"
-        );
+    navButtons.forEach(button => {
+        button.classList.remove("active");
+    });
+
+    const pagina = document.getElementById(page + "Page");
 
     if (pagina) {
-
-        pagina.classList.add(
-            "active-page"
-        );
-
+        pagina.classList.add("active-page");
     }
 
-    const botao =
-        document.querySelector(
-            `[data-page="${page}"]`
-        );
+    const botao = document.querySelector(
+        `[data-page="${page}"]`
+    );
 
     if (botao) {
-
-        botao.classList.add(
-            "active"
-        );
-
+        botao.classList.add("active");
     }
-
 }
 
 // =====================================
@@ -100,9 +70,7 @@ document
 
         result.innerHTML = "";
 
-        result.classList.remove(
-            "show"
-        );
+        result.classList.remove("show");
 
         attachmentArea.innerHTML = "";
 
@@ -111,7 +79,6 @@ document
         conversa = [];
 
         problem.focus();
-
     });
 
 // =====================================
@@ -122,21 +89,15 @@ document
     .querySelectorAll(".category")
     .forEach(category => {
 
-        category.addEventListener(
-            "click",
-            () => {
+        category.addEventListener("click", () => {
 
-                const nome =
-                    category.dataset.category;
+            const nome = category.dataset.category;
 
-                problem.value =
-                    `Quero diagnosticar um equipamento da categoria ${nome}.`;
+            problem.value =
+                `Quero diagnosticar um equipamento da categoria ${nome}.`;
 
-                problem.focus();
-
-            }
-        );
-
+            problem.focus();
+        });
     });
 
 // =====================================
@@ -145,100 +106,94 @@ document
 
 document
     .getElementById("analyzeButton")
-    .addEventListener(
-        "click",
-        analisarProblema
-    );
+    .addEventListener("click", analisarProblema);
 
 async function analisarProblema() {
 
-    const texto =
-        problem.value.trim();
+    const texto = problem.value.trim();
 
-    if (
-        !texto &&
-        !imagemBase64
-    ) {
-
+    if (!texto && !imagemBase64) {
         return;
-
     }
+
+    // =================================
+    // GUARDAR MENSAGEM DO USUÁRIO
+    // =================================
 
     if (texto) {
 
         conversa.push({
-
             role: "user",
-
             text: texto
-
         });
 
     }
 
     problem.value = "";
 
+    // =================================
+    // MOSTRAR MENSAGEM
+    // =================================
+
     adicionarMensagem(
         "user",
         texto
     );
 
+    // =================================
+    // LOADING
+    // =================================
+
     adicionarLoading();
 
     try {
 
-        const response =
-            await fetch(
-                "/api/analisar",
-                {
+        // =================================
+        // BACKEND ONLINE DO FIXAI
+        // =================================
 
-                    method: "POST",
+        const response = await fetch(
+            "https://fixlyra.onrender.com/api/analisar",
+            {
+                method: "POST",
 
-                    headers: {
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-                        "Content-Type":
-                            "application/json"
+                body: JSON.stringify({
+                    problema: texto,
+                    imagem: imagemBase64,
+                    historico: conversa
+                })
+            }
+        );
 
-                    },
-
-                    body: JSON.stringify({
-
-                        problema:
-                            texto,
-
-                        imagem:
-                            imagemBase64,
-
-                        historico:
-                            conversa
-
-                    })
-
-                }
-            );
-
-        const data =
-            await response.json();
+        const data = await response.json();
 
         if (!response.ok) {
 
             throw new Error(
                 data.erro ||
-                "Erro desconhecido."
+                "Erro desconhecido no servidor."
             );
 
         }
 
         removerLoading();
 
+        // =================================
+        // GUARDAR RESPOSTA
+        // =================================
+
         conversa.push({
-
             role: "assistant",
-
-            text:
-                data.resposta
-
+            text: data.resposta
         });
+
+        // =================================
+        // MOSTRAR RESPOSTA
+        // =================================
 
         adicionarMensagem(
             "assistant",
@@ -247,38 +202,39 @@ async function analisarProblema() {
 
         salvarReparo(texto);
 
+        // =================================
+        // LIMPAR IMAGEM
+        // =================================
+
         imagemBase64 = null;
 
         attachmentArea.innerHTML = "";
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "ERRO NO FIXAI:",
+            error
+        );
 
         removerLoading();
 
         adicionarMensagem(
             "assistant",
-            "Tente Novamente"
+            "❌ Não foi possível realizar a análise.\n\n" +
+            error.message
         );
-
     }
-
 }
 
 // =====================================
 // MOSTRAR MENSAGEM
 // =====================================
 
-function adicionarMensagem(
-    tipo,
-    texto
-) {
+function adicionarMensagem(tipo, texto) {
 
     const mensagem =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     mensagem.className =
         `chat-message ${tipo}`;
@@ -287,9 +243,10 @@ function adicionarMensagem(
 
         <div class="chat-avatar">
 
-            ${tipo === "user"
-                ? "👤"
-                : "🤖"
+            ${
+                tipo === "user"
+                    ? "👤"
+                    : "🤖"
             }
 
         </div>
@@ -299,25 +256,16 @@ function adicionarMensagem(
             ${formatarResposta(texto)}
 
         </div>
-
     `;
 
-    result.appendChild(
-        mensagem
-    );
+    result.appendChild(mensagem);
 
-    result.classList.add(
-        "show"
-    );
+    result.classList.add("show");
 
     mensagem.scrollIntoView({
-
         behavior: "smooth",
-
         block: "nearest"
-
     });
-
 }
 
 // =====================================
@@ -327,12 +275,9 @@ function adicionarMensagem(
 function adicionarLoading() {
 
     const loading =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
-    loading.id =
-        "chatLoading";
+    loading.id = "chatLoading";
 
     loading.className =
         "chat-message assistant";
@@ -350,31 +295,22 @@ function adicionarLoading() {
                 <div class="spinner"></div>
 
                 <p>
-                    O Fixlyra está pensando...
+                    O FixAI está pensando...
                 </p>
 
             </div>
 
         </div>
-
     `;
 
-    result.appendChild(
-        loading
-    );
+    result.appendChild(loading);
 
-    result.classList.add(
-        "show"
-    );
+    result.classList.add("show");
 
     loading.scrollIntoView({
-
         behavior: "smooth",
-
         block: "nearest"
-
     });
-
 }
 
 // =====================================
@@ -384,16 +320,11 @@ function adicionarLoading() {
 function removerLoading() {
 
     const loading =
-        document.getElementById(
-            "chatLoading"
-        );
+        document.getElementById("chatLoading");
 
     if (loading) {
-
         loading.remove();
-
     }
-
 }
 
 // =====================================
@@ -402,59 +333,49 @@ function removerLoading() {
 
 function formatarResposta(texto) {
 
-    let html =
-        escaparHTML(texto);
+    let html = escaparHTML(texto);
 
-    html =
-        html.replace(
-            /🔍 DIAGNÓSTICO PROVÁVEL/g,
-            "<h3>🔍 DIAGNÓSTICO PROVÁVEL</h3>"
-        );
+    html = html.replace(
+        /🔍 DIAGNÓSTICO PROVÁVEL/g,
+        "<h3>🔍 DIAGNÓSTICO PROVÁVEL</h3>"
+    );
 
-    html =
-        html.replace(
-            /⚠️ POSSÍVEIS CAUSAS/g,
-            "<h3>⚠️ POSSÍVEIS CAUSAS</h3>"
-        );
+    html = html.replace(
+        /⚠️ POSSÍVEIS CAUSAS/g,
+        "<h3>⚠️ POSSÍVEIS CAUSAS</h3>"
+    );
 
-    html =
-        html.replace(
-            /🧪 TESTES/g,
-            "<h3>🧪 TESTES</h3>"
-        );
+    html = html.replace(
+        /🧪 TESTES/g,
+        "<h3>🧪 TESTES</h3>"
+    );
 
-    html =
-        html.replace(
-            /🔧 FERRAMENTAS/g,
-            "<h3>🔧 FERRAMENTAS</h3>"
-        );
+    html = html.replace(
+        /🔧 FERRAMENTAS/g,
+        "<h3>🔧 FERRAMENTAS</h3>"
+    );
 
-    html =
-        html.replace(
-            /🛠️ PASSO A PASSO/g,
-            "<h3>🛠️ PASSO A PASSO</h3>"
-        );
+    html = html.replace(
+        /🛠️ PASSO A PASSO/g,
+        "<h3>🛠️ PASSO A PASSO</h3>"
+    );
 
-    html =
-        html.replace(
-            /⚠️ SEGURANÇA/g,
-            "<h3>⚠️ SEGURANÇA</h3>"
-        );
+    html = html.replace(
+        /⚠️ SEGURANÇA/g,
+        "<h3>⚠️ SEGURANÇA</h3>"
+    );
 
-    html =
-        html.replace(
-            /❓ PRÓXIMA PERGUNTA/g,
-            "<h3>❓ PRÓXIMA PERGUNTA</h3>"
-        );
+    html = html.replace(
+        /❓ PRÓXIMA PERGUNTA/g,
+        "<h3>❓ PRÓXIMA PERGUNTA</h3>"
+    );
 
-    html =
-        html.replace(
-            /\n/g,
-            "<br>"
-        );
+    html = html.replace(
+        /\n/g,
+        "<br>"
+    );
 
     return html;
-
 }
 
 // =====================================
@@ -462,20 +383,15 @@ function formatarResposta(texto) {
 // =====================================
 
 const photoInput =
-    document.getElementById(
-        "photoInput"
-    );
+    document.getElementById("photoInput");
 
 document
     .getElementById("photoButton")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            photoInput.click();
+        photoInput.click();
 
-        }
-    );
+    });
 
 photoInput.addEventListener(
     "change",
@@ -487,15 +403,12 @@ photoInput.addEventListener(
         if (!file) return;
 
         imagemBase64 =
-            await arquivoParaBase64(
-                file
-            );
+            await arquivoParaBase64(file);
 
         mostrarArquivo(
             file,
             true
         );
-
     }
 );
 
@@ -504,20 +417,15 @@ photoInput.addEventListener(
 // =====================================
 
 const videoInput =
-    document.getElementById(
-        "videoInput"
-    );
+    document.getElementById("videoInput");
 
 document
     .getElementById("videoButton")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            videoInput.click();
+        videoInput.click();
 
-        }
-    );
+    });
 
 videoInput.addEventListener(
     "change",
@@ -532,7 +440,6 @@ videoInput.addEventListener(
             file,
             false
         );
-
     }
 );
 
@@ -541,20 +448,15 @@ videoInput.addEventListener(
 // =====================================
 
 const fileInput =
-    document.getElementById(
-        "fileInput"
-    );
+    document.getElementById("fileInput");
 
 document
     .getElementById("fileButton")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            fileInput.click();
+        fileInput.click();
 
-        }
-    );
+    });
 
 fileInput.addEventListener(
     "change",
@@ -569,7 +471,6 @@ fileInput.addEventListener(
             file,
             false
         );
-
     }
 );
 
@@ -596,30 +497,21 @@ function arquivoParaBase64(file) {
             reader.onerror =
                 reject;
 
-            reader.readAsDataURL(
-                file
-            );
-
+            reader.readAsDataURL(file);
         }
     );
-
 }
 
 // =====================================
 // MOSTRAR ARQUIVO
 // =====================================
 
-function mostrarArquivo(
-    file,
-    imagem
-) {
+function mostrarArquivo(file, imagem) {
 
     attachmentArea.innerHTML = "";
 
     const container =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     container.className =
         "attachment";
@@ -627,42 +519,27 @@ function mostrarArquivo(
     if (imagem) {
 
         const img =
-            document.createElement(
-                "img"
-            );
+            document.createElement("img");
 
         img.src =
-            URL.createObjectURL(
-                file
-            );
+            URL.createObjectURL(file);
 
-        container.appendChild(
-            img
-        );
+        container.appendChild(img);
 
     } else {
 
         const icon =
-            document.createElement(
-                "span"
-            );
+            document.createElement("span");
 
-        icon.textContent =
-            "📎";
+        icon.textContent = "📎";
 
-        icon.style.fontSize =
-            "25px";
+        icon.style.fontSize = "25px";
 
-        container.appendChild(
-            icon
-        );
-
+        container.appendChild(icon);
     }
 
     const info =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     info.innerHTML = `
 
@@ -676,17 +553,11 @@ function mostrarArquivo(
             ${(file.size / 1024 / 1024).toFixed(2)}
             MB
         </small>
-
     `;
 
-    container.appendChild(
-        info
-    );
+    container.appendChild(info);
 
-    attachmentArea.appendChild(
-        container
-    );
-
+    attachmentArea.appendChild(container);
 }
 
 // =====================================
@@ -694,7 +565,6 @@ function mostrarArquivo(
 // =====================================
 
 let recognition = null;
-
 let ouvindo = false;
 
 function iniciarVoz() {
@@ -710,7 +580,6 @@ function iniciarVoz() {
         );
 
         return;
-
     }
 
     if (ouvindo) {
@@ -718,7 +587,6 @@ function iniciarVoz() {
         recognition.stop();
 
         return;
-
     }
 
     recognition =
@@ -742,7 +610,6 @@ function iniciarVoz() {
 
         micButton.title =
             "Ouvindo...";
-
     };
 
     recognition.onresult =
@@ -759,7 +626,6 @@ function iniciarVoz() {
                 texto;
 
             analisarProblema();
-
         };
 
     recognition.onend = () => {
@@ -771,7 +637,6 @@ function iniciarVoz() {
 
         micButton.title =
             "Falar";
-
     };
 
     recognition.onerror =
@@ -784,11 +649,9 @@ function iniciarVoz() {
 
             micButton.title =
                 "Falar";
-
         };
 
     recognition.start();
-
 }
 
 micButton.addEventListener(
@@ -801,35 +664,23 @@ micButton.addEventListener(
 // =====================================
 
 const profileModal =
-    document.getElementById(
-        "profileModal"
-    );
+    document.getElementById("profileModal");
 
 document
     .getElementById("profileButton")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            profileModal.classList.add(
-                "show"
-            );
+        profileModal.classList.add("show");
 
-        }
-    );
+    });
 
 document
     .getElementById("closeProfile")
-    .addEventListener(
-        "click",
-        () => {
+    .addEventListener("click", () => {
 
-            profileModal.classList.remove(
-                "show"
-            );
+        profileModal.classList.remove("show");
 
-        }
-    );
+    });
 
 profileModal.addEventListener(
     "click",
@@ -843,9 +694,7 @@ profileModal.addEventListener(
             profileModal.classList.remove(
                 "show"
             );
-
         }
-
     }
 );
 
@@ -860,7 +709,7 @@ function salvarReparo(texto) {
     let reparos =
         JSON.parse(
             localStorage.getItem(
-                "fixlyra_reparos"
+                "fixai_reparos"
             )
         ) || [];
 
@@ -873,7 +722,6 @@ function salvarReparo(texto) {
                 .toLocaleString(
                     "pt-BR"
                 )
-
     });
 
     reparos =
@@ -883,14 +731,11 @@ function salvarReparo(texto) {
         );
 
     localStorage.setItem(
-        "fixlyra_reparos",
-        JSON.stringify(
-            reparos
-        )
+        "fixai_reparos",
+        JSON.stringify(reparos)
     );
 
     carregarHistorico();
-
 }
 
 // =====================================
@@ -907,13 +752,11 @@ function carregarHistorico() {
     let reparos =
         JSON.parse(
             localStorage.getItem(
-                "fixlyra_reparos"
+                "fixai_reparos"
             )
         ) || [];
 
-    if (
-        reparos.length === 0
-    ) {
+    if (reparos.length === 0) {
 
         area.innerHTML = `
 
@@ -922,15 +765,13 @@ function carregarHistorico() {
                 style="display:block;"
             >
 
-                Você ainda não possui
+                🕘 Você ainda não possui
                 reparos salvos.
 
             </div>
-
         `;
 
         return;
-
     }
 
     area.innerHTML = "";
@@ -966,16 +807,11 @@ function carregarHistorico() {
                 <small>
                     ${reparo.data}
                 </small>
-
             `;
 
-            area.appendChild(
-                div
-            );
-
+            area.appendChild(div);
         }
     );
-
 }
 
 carregarHistorico();
@@ -987,13 +823,10 @@ carregarHistorico();
 function escaparHTML(texto) {
 
     const div =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     div.textContent =
         texto;
 
     return div.innerHTML;
-
 }
